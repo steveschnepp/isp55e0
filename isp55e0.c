@@ -817,6 +817,7 @@ static void load_file(struct device *dev, struct content *info)
 	struct stat statbuf;
 	int ret;
 	int fd;
+	off_t total_read = 0;
 
 	fd = open(info->filename, O_RDONLY);
 	if (fd == -1)
@@ -840,10 +841,16 @@ static void load_file(struct device *dev, struct content *info)
 
 	memset(info->buf, 0xff, info->len);
 
-	/* TODO: loop until all read, or use mmap instead. */
-	ret = read(fd, info->buf, statbuf.st_size);
-	if (ret != statbuf.st_size)
-		err(EXIT_FAILURE, "Can't read firmware file");
+	while (total_read < statbuf.st_size) {
+		off_t remaining = statbuf.st_size - total_read;
+		int ret = read(fd, info->buf + total_read, remaining);
+		if (dev->debug)
+			printf("info->buf %p total_read %ld statbuf.st_size %ld remaining %ld read %d\n ", info->buf, total_read, statbuf.st_size, remaining, ret);
+		if (ret < 0) {
+			err(EXIT_FAILURE, "Can't read firmware file");
+		}
+		total_read += ret;
+	}
 
 	close(fd);
 }
