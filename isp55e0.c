@@ -27,7 +27,23 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+
+#ifdef WIN32
+#include "compat-err.h"
+
+static uint32_t be32toh(uint32_t const net) {
+    uint8_t data[4] = {};
+    memcpy(&data, &net, sizeof(data));
+
+    return ((uint32_t) data[3] << 0)
+         | ((uint32_t) data[2] << 8)
+         | ((uint32_t) data[1] << 16)
+         | ((uint32_t) data[0] << 24);
+}
+#else
 #include <err.h>
+#endif
+
 #include <libusb-1.0/libusb.h>
 
 #include "isp55e0.h"
@@ -645,9 +661,12 @@ static void open_usb_device(struct device *dev)
 	if (dev->usb_h == NULL)
 		errx(EXIT_FAILURE, "No CH5xx devices found in ISP mode");
 
+#ifndef WIN32
+	/* it seems WIN32 libusb doesn't support this */
 	ret = libusb_set_auto_detach_kernel_driver(dev->usb_h, 1);
 	if (ret)
 		errx(EXIT_FAILURE, "Can't detach the device from the kernel");
+#endif
 
 	ret = libusb_claim_interface(dev->usb_h, 0);
 	if (ret)
