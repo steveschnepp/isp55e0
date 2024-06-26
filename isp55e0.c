@@ -31,15 +31,8 @@
 #ifdef WIN32
 #include "compat-err.h"
 
-static uint32_t be32toh(uint32_t const net) {
-    uint8_t data[4] = {};
-    memcpy(&data, &net, sizeof(data));
+#define be32toh _byteswap_ulong
 
-    return ((uint32_t) data[3] << 0)
-         | ((uint32_t) data[2] << 8)
-         | ((uint32_t) data[1] << 16)
-         | ((uint32_t) data[0] << 24);
-}
 #else
 #include <err.h>
 #endif
